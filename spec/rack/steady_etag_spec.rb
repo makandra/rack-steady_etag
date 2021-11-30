@@ -65,7 +65,7 @@ describe Rack::SteadyEtag do
     expect(response1).not_to have_same_etag_as(response2)
   end
 
-  it "generates the same ETags for two bodies that only differ in head's CSRF token" do
+  it "generates the same ETags for two bodies that only differ in a <meta name='csrf-token'>" do
     response1 = html_response(<<~HTML)
       <head>
         <meta name="csrf-token" content="6EueAlhls9P" />
@@ -92,6 +92,22 @@ describe Rack::SteadyEtag do
       <form>
         <input type="hidden" name="authenticity_token" content="456" />
       </form>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
+  it "generates the same ETags for two bodies that only differ in a <meta name='csp-nonce'>" do
+    response1 = html_response(<<~HTML)
+      <head>
+        <meta name="csp-nonce" content="123" />
+      </head>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <head>
+        <meta name="csrf-token" content="456" />
+      </head>
     HTML
 
     expect(response1).to have_same_etag_as(response2)
@@ -129,6 +145,12 @@ describe Rack::SteadyEtag do
     response = html_response('Foo')
     expect(response[1]['ETag']).to start_with("W/")
   end
+
+  # it 'does not crash with a Rack::BodyProxy' do
+  #   app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, Rack::BodyProxy.new("Hello, World!") {}] }
+  #   response = etag(app).call(request)
+  #   expect(response[1]['ETag']).to eq "W/\"dffd6021bb2bd5b0af676290809ec3a5\""
+  # end
 
   # Tests from Rack::Test
 

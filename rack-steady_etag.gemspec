@@ -3,7 +3,7 @@
 require_relative "lib/rack/steady_etag/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "rack-steady-etag"
+  spec.name = "rack-steady_etag"
   spec.version = Rack::SteadyEtag::VERSION
   spec.authors = ["Henning Koch"]
   spec.email = ["henning.koch@makandra.de"]

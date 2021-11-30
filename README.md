@@ -1,15 +1,16 @@
-# Rack::Steady::Etag
+# Rack::SteadyETag
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/rack/steady/etag`. To experiment with that code, run `bin/console` for an interactive prompt.
+By default Rails generates [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) headers by hashing the response body. In theory this would [enable caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match) for multiple requests to the same resource. However, since layouts often insert randomly rotating CSRF tokens and CSP nonces into the HTML, two requests for the same content and user will never produce the same response. This means the default ETags from Rails will [never hit a cache](https://github.com/rails/rails/issues/29889).
 
-TODO: Delete this and the text above, and describe your gem
+`Rack::SteadyETag` is a drop-in replacement for `Rack::ETag` in Rails' default middleware stack. It also generates `Etag` by hashing response body, but ignores CSRF tokens and CSP nonces from Rails helpers.
+
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rack-steady-etag'
+gem 'rack-steady_etag'
 ```
 
 And then execute:
@@ -18,7 +19,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install rack-steady-etag
+    $ gem install rack-steady_etag
 
 ## Usage
 
@@ -41,3 +42,9 @@ The gem is available as open source under the terms of the [MIT License](https:/
 ## Credits
 
 [Rack Core Team](https://github.com/rack/rack#label-Thanks) and [Rack contributors](https://github.com/rack/rack/graphs/contributors).
+
+## Limitations
+
+No streaming support.
+
+[This will be broken until at least Rack 3](https://github.com/rack/rack/issues/1619).

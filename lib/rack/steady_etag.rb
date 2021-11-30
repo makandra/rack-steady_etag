@@ -1,4 +1,4 @@
-require 'rack'
+require 'byebug'
 require 'digest/sha2'
 require "active_support/all"
 require_relative "steady_etag"
@@ -19,6 +19,7 @@ module Rack
 
     IGNORE_PATTERNS = [
       /<meta[^>]*\bname=(["']?)csrf-token\1[^>]+>/,
+      /<meta[^>]*\bname=(["']?)csp-nonce\1[^>]+>/,
       /<input[^>]*\bname=(["']?)authenticity_token\1[^>]+>/,
     ]
 
@@ -34,9 +35,12 @@ module Rack
       headers = Utils::HeaderHash[headers]
       session = env[RACK_SESSION]
 
-      if etag_status?(status) && body.respond_to?(:to_ary) && !skip_caching?(headers)
-        body = body.to_ary
-        digest = digest_body(body, headers, session)
+      if etag_status?(status) && etag_body?(body) && !skip_caching?(headers)
+        original_body = body
+        digest, new_body = digest_body(body, headers, session)
+        body = Rack::BodyProxy.new(new_body) do
+          original_body.close if original_body.respond_to?(:close)
+        end
         headers[ETAG] = %(W/"#{digest}") if digest
       end
 
@@ -57,6 +61,10 @@ module Rack
       status == 200 || status == 201
     end
 
+    def etag_body?(body)
+      !body.respond_to?(:to_path)
+    end
+
     def skip_caching?(headers)
       headers.key?(ETAG) || headers.key?('Last-Modified')
     end
@@ -66,16 +74,17 @@ module Rack
     end
 
     def digest_body(body, headers, session)
+      parts = []
       digest = nil
 
       body.each do |part|
+        parts << part
+
         if part.present?
           set_cache_control_with_digest(headers)
 
           if cache_control_private?(headers)
-            @ignore_patterns.each do |ignore_pattern|
-              part = part.gsub(ignore_pattern, '')
-            end
+            part = strip_ignore_patterns(part)
           end
 
           unless digest
@@ -91,11 +100,20 @@ module Rack
       end
 
       if digest
-        digest.hexdigest.byteslice(0,32)
+        digest = digest.hexdigest.byteslice(0,32)
       else
         set_cache_control_without_digest(headers)
       end
-    end
-  end
 
+      [digest, parts]
+    end
+
+    def strip_ignore_patterns(html)
+      @ignore_patterns.each do |ignore_pattern|
+        html = html.gsub(ignore_pattern, '')
+      end
+      html
+    end
+
+  end
 end
