@@ -15,9 +15,98 @@ describe Rack::SteadyEtag do
     File.new(File::NULL)
   end
 
-  it 'generates different ETags for different response bodies'
+  def html_response(html, headers = {})
+    app = lambda { |env| [200, headers.reverse_merge('Content-Type' => 'text/html'), [html]] }
+    etag(app).call(request)
+  end
 
-  it 'generates the same ETag for different response bodies'
+  matcher :have_same_etag_as do |response2|
+    match do |response1|
+      etag1 = response1[1]['ETag']
+      etag2 = response2[1]['ETag']
+
+      etag1.present? && etag2.present? && etag1 == etag2
+    end
+
+    failure_message do |response1|
+      "expected '#{etag(response1)}' to be the same ETag as #{etag(response2)}"
+    end
+
+    failure_message_when_negated do |response1|
+      "expected responses to have different ETags, but both had #{etag(response1)}"
+    end
+
+    def etag(response)
+      response[1]['ETag']
+    end
+  end
+
+  it 'generates the same ETag for two equal response bodies' do
+    response1 = html_response('Foo')
+    response2 = html_response('Foo')
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
+  it 'generates different ETags for different response bodies' do
+    response1 = html_response('Foo')
+    response2 = html_response('Bar')
+
+    expect(response1).not_to have_same_etag_as(response2)
+  end
+
+  it "generates the same ETags for two bodies that only differ in head's CSRF token" do
+    response1 = html_response(<<~HTML)
+      <head>
+        <meta name="csrf-token" content="6EueAlhls9P" />
+      </head>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <head>
+        <meta name="csrf-token" content="qMN0fkVqOg" />
+      </head>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
+  it "generates the same ETags for two bodies that only differ in form's authenticity token token" do
+    response1 = html_response(<<~HTML)
+      <form>
+        <input type="hidden" name="authenticity_token" content="123" />
+      </form>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <form>
+        <input type="hidden" name="authenticity_token" content="456" />
+      </form>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
+  it "does not ignore patterns for digest when Cache-Control isn't private" do
+    response1 = html_response(<<~HTML, { 'Cache-Control' => 'public' })
+      <head>
+        <meta name="csrf-token" content="6EueAlhls9P" />
+      </head>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <head>
+        <meta name="csrf-token" content="qMN0fkVqOg" />
+      </head>
+    HTML
+
+    expect(response1).to_not have_same_etag_as(response2)
+  end
+
+  it 'generates weak ETags because we only digest the response body' do
+    response = html_response('Foo')
+    expect(response[1]['ETag']).to start_with("W/")
+  end
 
   # Tests from Rack::Test
 
