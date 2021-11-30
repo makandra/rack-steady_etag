@@ -47,6 +47,17 @@ describe Rack::SteadyEtag do
     end
   end
 
+  matcher :have_body do |expected_string|
+    match do |actual_body|
+      actual_string = ''
+      actual_body.each do |part|
+        actual_string << part
+      end
+
+      actual_string == expected_string
+    end
+  end
+
   it 'generates the same ETag for two equal response bodies' do
     response1 = html_response('Foo')
     response2 = html_response('Foo')
@@ -75,6 +86,17 @@ describe Rack::SteadyEtag do
     HTML
 
     expect(response1).to have_same_etag_as(response2)
+  end
+
+  it 'does not change the response body when ignoring content' do
+    html = <<~HTML
+       <head>
+        <meta name="csrf-token" content="6EueAlhls9P" />
+      </head>
+    HTML
+
+    response = html_response(html.dup)
+    expect(response[2]).to have_body(html.dup)
   end
 
   it "generates the same ETags for two bodies that only differ in form's authenticity token token" do
