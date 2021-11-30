@@ -113,6 +113,18 @@ describe Rack::SteadyEtag do
     expect(response1).to have_same_etag_as(response2)
   end
 
+  it "generates the same ETags for two bodies that only differ in a <script nonce>" do
+    response1 = html_response(<<~HTML)
+      <script nonce="123">console.log("hi world")</script>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <script nonce="456">console.log("hi world")</script>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
   it "does not ignore patterns for digest when Cache-Control isn't private" do
     response1 = html_response(<<~HTML, headers: { 'Cache-Control' => 'public' })
       <head>

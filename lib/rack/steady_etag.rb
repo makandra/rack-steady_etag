@@ -18,9 +18,10 @@ module Rack
     DEFAULT_CACHE_CONTROL = "max-age=0, private, must-revalidate"
 
     IGNORE_PATTERNS = [
-      /<meta[^>]*\bname=(["']?)csrf-token\1[^>]+>/,
-      /<meta[^>]*\bname=(["']?)csp-nonce\1[^>]+>/,
-      /<input[^>]*\bname=(["']?)authenticity_token\1[^>]+>/,
+      /<meta\b[^>]*\bname=(["'])csrf-token\1[^>]+>/i,
+      /<meta\b[^>]*\bname=(["'])csp-nonce\1[^>]+>/i,
+      /<input\b[^>]*\bname=(["'])authenticity_token\1[^>]+>/i,
+      lambda { |string| string.gsub(/(<script\b[^>]*)\bnonce=(["'])[^"']+\2+/i, '\1') }
     ]
 
     def initialize(app, no_digest_cache_control: nil, digest_cache_control: DEFAULT_CACHE_CONTROL, ignore_patterns: IGNORE_PATTERNS.dup)
@@ -110,7 +111,11 @@ module Rack
 
     def strip_ignore_patterns(html)
       @ignore_patterns.each do |ignore_pattern|
-        html = html.gsub(ignore_pattern, '')
+        if ignore_pattern.respond_to?(:call)
+          html = ignore_pattern.call(html)
+        else
+          html = html.gsub(ignore_pattern, '')
+        end
       end
       html
     end
