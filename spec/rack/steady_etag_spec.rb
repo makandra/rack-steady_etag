@@ -1,6 +1,5 @@
 # Based on tests for Rack::Etag
 # https://github.com/rack/rack/blob/master/test/spec_etag.rb
-
 describe Rack::SteadyEtag do
 
   def etag(app, *args, **kwargs)
