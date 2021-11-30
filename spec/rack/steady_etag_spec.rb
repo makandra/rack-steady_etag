@@ -1,22 +1,33 @@
 # Based on tests for Rack::Etag
 # https://github.com/rack/rack/blob/master/test/spec_etag.rb
+
+require 'rack/session/abstract/id'
+
 describe Rack::SteadyEtag do
 
   def etag(app, *args, **kwargs)
     Rack::Lint.new Rack::SteadyETag.new(app, *args, **kwargs)
   end
 
-  def request
-    Rack::MockRequest.env_for
+  def request(opts = {})
+    Rack::MockRequest.env_for("", opts)
+  end
+
+  def session(id)
+    # double = instance_double(Rack::Session::Abstract::PersistedSecure::SecureSessionHash)
+    # double = instance_double(Rack::Session::Abstract::PersistedSecure)
+    # allow(double).to receive(:[]).with('session_id').and_return(id)
+    # double
+    { 'session_id' => id }
   end
 
   def sendfile_body
     File.new(File::NULL)
   end
 
-  def html_response(html, headers = {})
+  def html_response(html, headers: {}, env: {})
     app = lambda { |env| [200, headers.reverse_merge('Content-Type' => 'text/html'), [html]] }
-    etag(app).call(request)
+    etag(app).call(request(env))
   end
 
   matcher :have_same_etag_as do |response2|
@@ -87,7 +98,7 @@ describe Rack::SteadyEtag do
   end
 
   it "does not ignore patterns for digest when Cache-Control isn't private" do
-    response1 = html_response(<<~HTML, { 'Cache-Control' => 'public' })
+    response1 = html_response(<<~HTML, headers: { 'Cache-Control' => 'public' })
       <head>
         <meta name="csrf-token" content="6EueAlhls9P" />
       </head>
@@ -99,6 +110,18 @@ describe Rack::SteadyEtag do
       </head>
     HTML
 
+    expect(response1).to_not have_same_etag_as(response2)
+  end
+
+  it 'generates different ETags for the same content with and without a Rack session' do
+    response1 = html_response('content', env: { 'rack.session' => session('1') })
+    response2 = html_response('content', env: {} )
+    expect(response1).to_not have_same_etag_as(response2)
+  end
+
+  it 'generates different ETags for the same content with different Rack sessions' do
+    response1 = html_response('content', env: { 'rack.session' => session('1') })
+    response2 = html_response('content', env: { 'rack.session' => session('2') })
     expect(response1).to_not have_same_etag_as(response2)
   end
 

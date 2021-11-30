@@ -36,10 +36,11 @@ module Rack
     def call(env)
       status, headers, body = @app.call(env)
       headers = Utils::HeaderHash[headers]
+      session = env[RACK_SESSION]
 
       if etag_status?(status) && body.respond_to?(:to_ary) && !skip_caching?(headers)
         body = body.to_ary
-        digest = digest_body(headers, body)
+        digest = digest_body(body, headers, session)
         headers[ETAG] = %(W/"#{digest}") if digest
       end
 
@@ -68,7 +69,7 @@ module Rack
       headers[CACHE_CONTROL] && headers[CACHE_CONTROL] =~ /\bprivate\b/
     end
 
-    def digest_body(headers, body)
+    def digest_body(body, headers, session)
       digest = nil
 
       body.each do |part|
@@ -81,7 +82,14 @@ module Rack
             end
           end
 
-          digest ||= Digest::SHA256.new
+          unless digest
+            digest = Digest::SHA256.new
+
+            if session && (session_id = session['session_id'])
+              digest << session_id.to_s
+            end
+          end
+
           digest << part
         end
       end
