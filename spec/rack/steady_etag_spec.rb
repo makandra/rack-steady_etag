@@ -14,10 +14,6 @@ describe Rack::SteadyEtag do
   end
 
   def session(id)
-    # double = instance_double(Rack::Session::Abstract::PersistedSecure::SecureSessionHash)
-    # double = instance_double(Rack::Session::Abstract::PersistedSecure)
-    # allow(double).to receive(:[]).with('session_id').and_return(id)
-    # double
     { 'session_id' => id }
   end
 
