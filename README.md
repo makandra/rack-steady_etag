@@ -1,15 +1,14 @@
 # Rack::SteadyETag
 
-With `Rack::SteadyETag` two Rails responses with the same content will produce the same `ETag`, even if the HTML differs in CSRF tokens or CSP nonces.
+`Rack::SteadyTag` is a Rack middleware that generates the same default [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) for responses that only differ in CSRF tokens or CSP nonces.
 
-By default Rails generates [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) headers by hashing the response body. In theory this would [enable caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match) for multiple requests to the same resource. However, since layouts often insert randomly rotating CSRF tokens and CSP nonces into the HTML, two requests for the same content and user will never produce the same response. This means the default ETags from Rails will [never hit a cache](https://github.com/rails/rails/issues/29889).
+By default Rails uses [`Rack::ETag`](https://rdoc.info/github/rack/rack/Rack/ETag) to generate `ETag` headers by hashing the response body. In theory this would [enable caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match) for multiple requests to the same resource. However, since most Rails application layouts insert randomly rotating CSRF tokens and CSP nonces into the HTML, two requests for the same content and user will never produce the same response bytes. This means the default ETags from Rails will [never hit a cache](https://github.com/rails/rails/issues/29889).
 
-`Rack::SteadyETag` is a drop-in replacement for `Rack::ETag` in Rails' default middleware stack. It also generates `Etag` by hashing response body, but ignores CSRF tokens and CSP nonces from Rails helpers.
-
+`Rack::SteadyETag` is a drop-in replacement for `Rack::ETag`.
 
 ## What is ignored
 
-The following patterns are ignored for the `ETag` digest:
+`Rack::SteadyTag`  ignores the following patterns the `ETag` hash:
 
 ```html
 <meta name="csrf-token" value="random" ...>
@@ -30,13 +29,14 @@ You can also push lambda for arbitrary transformations:
 Rack::SteadyETag::IGNORED_PATTERNS << -> { |text| text.gsub(/<meta name="XSRF-TOKEN" value="[^"]+">/, '') }
 ```
 
+Transformations are only applied for the `ETag` hash. The response body will not be changed.
+
 ## Covered edge cases
 
+- Different `ETags` are generated when the same content is accessed with different Rack sessions.
 - `ETags` are only generated when the response is `Cache-Control: private` (this is a default in Rails).
 - No `ETag` is generated when the response already has an `ETag` header.
 - No `ETag` is generated when the response already has an `Last-Modified` header.
-- Different `ETags` are generated when the same content is accessed with different Rails sessions.
-- Different `ETags` are generated when the same content is accessed with and without a Rails session.
 
 
 ## Installation
@@ -67,17 +67,11 @@ config.middleware.swap Rack::ETag, Rack::SteadyETag
 - You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 - To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/makandra/rack-steady-etag.
-
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
 ## Credits
 
-[Rack Core Team](https://github.com/rack/rack#label-Thanks) and [Rack contributors](https://github.com/rack/rack/graphs/contributors).
+This library is based on `Rack::ETag`, created by the [Rack Core Team](https://github.com/rack/rack#label-Thanks) and [Rack contributors](https://github.com/rack/rack/graphs/contributors).
+
+Additional changes by [Henning Koch](https://twitter.com/triskweline) from [makandra](https://makandra.com).
 
 ## Limitations
 
