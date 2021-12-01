@@ -4,11 +4,11 @@
 
 By default Rails uses [`Rack::ETag`](https://rdoc.info/github/rack/rack/Rack/ETag) to generate `ETag` headers by hashing the response body. In theory this would [enable caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match) for multiple requests to the same resource. However, since most Rails application layouts insert randomly rotating CSRF tokens and CSP nonces into the HTML, two requests for the same content and user will never produce the same response bytes. This means the default ETags from Rails will [never hit a cache](https://github.com/rails/rails/issues/29889).
 
-`Rack::SteadyETag` is a drop-in replacement for `Rack::ETag`.
+`Rack::SteadyETag` is a drop-in replacement for `Rack::ETag`. It excludes random content (like CSRF tokens) from the generated ETag, causing two requests for the same content to usually carry the same ETag.
 
 ## What is ignored
 
-`Rack::SteadyTag`  ignores the following patterns the `ETag` hash:
+`Rack::SteadyTag`  ignores the following patterns from the `ETag` hash:
 
 ```html
 <meta name="csrf-token" value="random" ...>
