@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Henning Koch"]
   spec.email = ["henning.koch@makandra.de"]
 
-  spec.summary = "write me"
-  spec.description = "write me"
+  spec.summary = "Rack Middleware that produces the same ETag for responses that only differ in CSRF tokens or CSP nonce"
+  spec.description = spec.summary
   spec.homepage = "https://github.com/makandra/rack-steady_etag"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.5.0"
