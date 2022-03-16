@@ -9,6 +9,12 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Compatible changes
 
+## 0.1.1 - 2022-05-16
+
+### Compatible changes
+
+- Activate rubygems MFA
+
 ## 0.1.0 - 2021-12-01
 
 - initial release
