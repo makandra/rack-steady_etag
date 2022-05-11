@@ -3,7 +3,7 @@ PATH
   specs:
     rack-steady_etag (0.1.1)
       activesupport (>= 3.2)
-      rack
+      rack (~> 2.0)
 
 GEM
   remote: https://rubygems.org/

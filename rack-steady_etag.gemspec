@@ -31,10 +31,10 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
-  spec.add_dependency "rack"
-  spec.add_dependency 'activesupport', '>= 3.2'
+  # I expect Rack 3 to have a new ETag middleware to no longer buffer
+  # streaming responses: https://github.com/rack/rack/issues/1619
+  # Once Rack 3 is out we should release a new version of this gem.
+  spec.add_dependency "rack", '~>2.0'
 
-  # For more information and examples about making a new gem, checkout our
-  # guide at: https://bundler.io/guides/creating_gem.html
+  spec.add_dependency 'activesupport', '>= 3.2'
 end
