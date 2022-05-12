@@ -143,22 +143,6 @@ describe Rack::SteadyEtag do
     expect(response1).to have_same_etag_as(response2)
   end
 
-  it "does not ignore patterns for digest when Cache-Control isn't private" do
-    response1 = html_response(<<~HTML, headers: { 'Cache-Control' => 'public' })
-      <head>
-        <meta name="csrf-token" content="6EueAlhls9P" />
-      </head>
-    HTML
-
-    response2 = html_response(<<~HTML)
-      <head>
-        <meta name="csrf-token" content="qMN0fkVqOg" />
-      </head>
-    HTML
-
-    expect(response1).to_not have_same_etag_as(response2)
-  end
-
   it 'generates different ETags for the same content with and without a Rack session' do
     response1 = html_response('content', env: { 'rack.session' => session('1') })
     response2 = html_response('content', env: {} )
@@ -212,6 +196,12 @@ describe Rack::SteadyEtag do
     app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, []] }
     response = etag(app, no_digest_cache_control: 'no-cache').call(request)
     expect(response[1]['Cache-Control']).to eq 'no-cache'
+  end
+
+  it "sets a given Cache-Control for HTTP status codes that we don't digest, to preserve compatibility with Rack::ETag" do
+    app = lambda { |env| [500, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    response = etag(app, no_digest_cache_control: 'no-store').call(request)
+    expect(response[1]['Cache-Control']).to eq 'no-store'
   end
 
   it "not set Cache-Control if it is already set" do

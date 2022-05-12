@@ -45,6 +45,12 @@ module Rack
         headers[ETAG] = %(W/"#{digest}") if digest
       end
 
+      if digest
+        set_cache_control_with_digest(headers)
+      else
+        set_cache_control_without_digest(headers)
+      end
+
       [status, headers, body]
     end
 
@@ -70,10 +76,6 @@ module Rack
       headers.key?(ETAG) || headers.key?('Last-Modified')
     end
 
-    def cache_control_private?(headers)
-      headers[CACHE_CONTROL] && headers[CACHE_CONTROL] =~ /\bprivate\b/
-    end
-
     def digest_body(body, headers, session)
       parts = []
       digest = nil
@@ -82,11 +84,7 @@ module Rack
         parts << part
 
         if part.present?
-          set_cache_control_with_digest(headers)
-
-          if cache_control_private?(headers)
-            part = strip_ignore_patterns(part)
-          end
+          part = strip_ignore_patterns(part)
 
           unless digest
             digest = Digest::SHA256.new
@@ -102,8 +100,6 @@ module Rack
 
       if digest
         digest = digest.hexdigest.byteslice(0,32)
-      else
-        set_cache_control_without_digest(headers)
       end
 
       [digest, parts]
