@@ -31,8 +31,8 @@ module Rack
 
       @digest_cache_control = digest_cache_control
 
-      # Rails sets a default `Cache-Control: no-cache` for responses that
-      # we cannot digest.
+      # Rails sets a default `Cache-Control: no-cache` for responses that we cannot digest.
+      # See https://github.com/rails/rails/blob/d96609505511a76c618dc3adfa3ca4679317d008/railties/lib/rails/application/default_middleware_stack.rb#L81
       @no_digest_cache_control = no_digest_cache_control
     end
 
