@@ -6,8 +6,8 @@ require_relative "steady_etag/version"
 
 module Rack
 
-  # Based on Rack::Etag
-  # https://github.com/rack/rack/blob/master/lib/rack/etag.rb
+  # Based on Rack::Etag from rack 2.2.2
+  # https://github.com/rack/rack/blob/v2.2.2/lib/rack/etag.rb
   #
   # Automatically sets the ETag header on all String bodies.
   #
@@ -15,6 +15,8 @@ module Rack
   # a sendfile body (body.responds_to :to_path) is given (since such cases
   # should be handled by apache/nginx).
   class SteadyETag
+
+    # Yes, Rack::ETag sets a default Cache-Control for responses that it can digest.
     DEFAULT_CACHE_CONTROL = "max-age=0, private, must-revalidate"
 
     IGNORE_PATTERNS = [
@@ -24,11 +26,14 @@ module Rack
       lambda { |string| string.gsub(/(<script\b[^>]*)\bnonce=(["'])[^"']+\2+/i, '\1') }
     ]
 
-    def initialize(app, no_digest_cache_control: nil, digest_cache_control: DEFAULT_CACHE_CONTROL, ignore_patterns: IGNORE_PATTERNS.dup)
+    def initialize(app, no_digest_cache_control = nil, digest_cache_control = DEFAULT_CACHE_CONTROL)
       @app = app
+
       @digest_cache_control = digest_cache_control
+
+      # Rails sets a default `Cache-Control: no-cache` for responses that
+      # we cannot digest.
       @no_digest_cache_control = no_digest_cache_control
-      @ignore_patterns = ignore_patterns
     end
 
     def call(env)
@@ -45,6 +50,12 @@ module Rack
         headers[ETAG] = %(W/"#{digest}") if digest
       end
 
+      # It would make more sense to only set a Cache-Control for responses that we process.
+      # However, the original Rack::ETag sets Cache-Control: @no_digest_cache_control
+      # for all responses, even responses that we don't otherwise modify.
+      # Hence if we move this code into the `if` above we would remove Rails' default
+      # Cache-Control headers for non-digestable responses, which would be a considerable
+      # change in behavior.
       if digest
         set_cache_control_with_digest(headers)
       else
@@ -69,6 +80,9 @@ module Rack
     end
 
     def etag_body?(body)
+      # Rack main branch checks for `:to_ary` here to exclude streaming responses,
+      # but that had other issues for me in testing. Maybe recheck when there is a
+      # new Rack release after 2.2.2.
       !body.respond_to?(:to_path)
     end
 
@@ -106,7 +120,7 @@ module Rack
     end
 
     def strip_ignore_patterns(html)
-      @ignore_patterns.each do |ignore_pattern|
+      IGNORE_PATTERNS.each do |ignore_pattern|
         if ignore_pattern.respond_to?(:call)
           html = ignore_pattern.call(html)
         else

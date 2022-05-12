@@ -188,19 +188,19 @@ describe Rack::SteadyEtag do
 
   it "set Cache-Control to chosen one if none is set" do
     app = lambda { |env| [201, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
-    response = etag(app, digest_cache_control: 'public').call(request)
+    response = etag(app, nil, 'public').call(request)
     expect(response[1]['Cache-Control']).to eq 'public'
   end
 
   it "set a given Cache-Control even if digest could not be calculated" do
     app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, []] }
-    response = etag(app, no_digest_cache_control: 'no-cache').call(request)
+    response = etag(app, 'no-cache').call(request)
     expect(response[1]['Cache-Control']).to eq 'no-cache'
   end
 
   it "sets a given Cache-Control for HTTP status codes that we don't digest, to preserve compatibility with Rack::ETag" do
     app = lambda { |env| [500, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
-    response = etag(app, no_digest_cache_control: 'no-store').call(request)
+    response = etag(app, 'no-store').call(request)
     expect(response[1]['Cache-Control']).to eq 'no-store'
   end
 
@@ -212,7 +212,7 @@ describe Rack::SteadyEtag do
 
   it "not set Cache-Control if directive isn't present" do
     app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
-    response = etag(app, no_digest_cache_control: nil, digest_cache_control: nil).call(request)
+    response = etag(app, nil, nil).call(request)
     expect(response[1]['Cache-Control']).to be_nil
   end
 
