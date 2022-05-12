@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rack-steady_etag (0.2.2)
+    rack-steady_etag (0.2.3)
       activesupport (>= 3.2)
       rack (~> 2.0)
 

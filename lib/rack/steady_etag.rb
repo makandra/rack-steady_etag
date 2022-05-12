@@ -1,4 +1,3 @@
-require 'byebug'
 require 'digest/sha2'
 require "active_support/all"
 require_relative "steady_etag"
