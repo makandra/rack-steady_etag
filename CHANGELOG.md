@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Unreleased
 
+## 0.2.1 - 2022-05-12
+
+- Only strip patterns for HTML and XHTML responses.
+
 ## 0.2.0 - 2022-05-12
 
 - Be more compatible with Rack 2.2.2:

@@ -19,11 +19,16 @@ module Rack
     # Yes, Rack::ETag sets a default Cache-Control for responses that it can digest.
     DEFAULT_CACHE_CONTROL = "max-age=0, private, must-revalidate"
 
-    IGNORE_PATTERNS = [
+    STRIP_PATTERNS = [
       /<meta\b[^>]*\bname=(["'])csrf-token\1[^>]+>/i,
       /<meta\b[^>]*\bname=(["'])csp-nonce\1[^>]+>/i,
       /<input\b[^>]*\bname=(["'])authenticity_token\1[^>]+>/i,
       lambda { |string| string.gsub(/(<script\b[^>]*)\bnonce=(["'])[^"']+\2+/i, '\1') }
+    ]
+
+    STRIP_CONTENT_TYPES = %w[
+      text/html
+      application/xhtml+xml
     ]
 
     def initialize(app, no_digest_cache_control = nil, digest_cache_control = DEFAULT_CACHE_CONTROL)
@@ -94,20 +99,14 @@ module Rack
       parts = []
       digest = nil
 
+      strippable_response = STRIP_CONTENT_TYPES.include?(headers['Content-Type'])
+
       body.each do |part|
         parts << part
 
         if part.present?
-          part = strip_ignore_patterns(part)
-
-          unless digest
-            digest = Digest::SHA256.new
-
-            if session && (session_id = session['session_id'])
-              digest << session_id.to_s
-            end
-          end
-
+          digest ||= initialize_digest(session)
+          part = strip_patterns(part) if strippable_response
           digest << part
         end
       end
@@ -119,12 +118,22 @@ module Rack
       [digest, parts]
     end
 
-    def strip_ignore_patterns(html)
-      IGNORE_PATTERNS.each do |ignore_pattern|
-        if ignore_pattern.respond_to?(:call)
-          html = ignore_pattern.call(html)
+    def initialize_digest(session)
+      digest = Digest::SHA256.new
+
+      if session && (session_id = session['session_id'])
+        digest << session_id.to_s
+      end
+
+      digest
+    end
+
+    def strip_patterns(html)
+      STRIP_PATTERNS.each do |pattern|
+        if pattern.respond_to?(:call)
+          html = pattern.call(html)
         else
-          html = html.gsub(ignore_pattern, '')
+          html = html.gsub(pattern, '')
         end
       end
       html

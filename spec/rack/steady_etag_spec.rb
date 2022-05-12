@@ -21,9 +21,14 @@ describe Rack::SteadyEtag do
     File.new(File::NULL)
   end
 
-  def html_response(html, headers: {}, env: {})
-    app = lambda { |env| [200, headers.reverse_merge('Content-Type' => 'text/html'), [html]] }
+  def text_response(html, headers: {}, env: {})
+    app = lambda { |env| [200, headers, [html]] }
     etag(app).call(request(env))
+  end
+
+  def html_response(html, headers: {}, env: {})
+    headers = headers.reverse_merge('Content-Type' => 'text/html')
+    text_response(html, headers: headers, env: env)
   end
 
   matcher :have_same_etag_as do |response2|
@@ -161,93 +166,119 @@ describe Rack::SteadyEtag do
   end
 
   # it 'does not crash with a Rack::BodyProxy' do
-  #   app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, Rack::BodyProxy.new("Hello, World!") {}] }
+  #   app = lambda { |env| [200, { 'Content-Type' => 'text/html' }, Rack::BodyProxy.new("Hello, World!") {}] }
   #   response = etag(app).call(request)
   #   expect(response[1]['ETag']).to eq "W/\"dffd6021bb2bd5b0af676290809ec3a5\""
   # end
 
+  it 'only strips patterns for HTML responses' do
+    excel_content_type = { 'Content-Type' => 'application/vnd.ms-excel' }
+
+    response1 = text_response(<<~HTML, headers: excel_content_type)
+      <head>
+        <meta name="csrf-token" content="6EueAlhls9P" />
+      </head>
+    HTML
+
+    response2 = text_response(<<~HTML, headers: excel_content_type)
+      <head>
+        <meta name="csrf-token" content="qMN0fkVqOg" />
+      </head>
+    HTML
+
+    expect(response1).not_to have_same_etag_as(response2)
+  end
+
+  it 'generates ETags for non-HTML responses' do
+    excel_content_type = { 'Content-Type' => 'application/vnd.ms-excel' }
+    response1 = text_response('foo', headers: excel_content_type)
+    response2 = text_response('foo', headers: excel_content_type)
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
   # Tests from Rack::Test
 
   it "set ETag if none is set if status is 200" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html' }, ["Hello, World!"]] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to eq "W/\"dffd6021bb2bd5b0af676290809ec3a5\""
   end
 
   it "set ETag if none is set if status is 201" do
-    app = lambda { |env| [201, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    app = lambda { |env| [201, { 'Content-Type' => 'text/html' }, ["Hello, World!"]] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to eq "W/\"dffd6021bb2bd5b0af676290809ec3a5\""
   end
 
   it "set Cache-Control to 'max-age=0, private, must-revalidate' (default) if none is set" do
-    app = lambda { |env| [201, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    app = lambda { |env| [201, { 'Content-Type' => 'text/html' }, ["Hello, World!"]] }
     response = etag(app).call(request)
     expect(response[1]['Cache-Control']).to eq 'max-age=0, private, must-revalidate'
   end
 
   it "set Cache-Control to chosen one if none is set" do
-    app = lambda { |env| [201, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    app = lambda { |env| [201, { 'Content-Type' => 'text/html' }, ["Hello, World!"]] }
     response = etag(app, nil, 'public').call(request)
     expect(response[1]['Cache-Control']).to eq 'public'
   end
 
   it "set a given Cache-Control even if digest could not be calculated" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, []] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html' }, []] }
     response = etag(app, 'no-cache').call(request)
     expect(response[1]['Cache-Control']).to eq 'no-cache'
   end
 
   it "sets a given Cache-Control for HTTP status codes that we don't digest, to preserve compatibility with Rack::ETag" do
-    app = lambda { |env| [500, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    app = lambda { |env| [500, { 'Content-Type' => 'text/html' }, ["Hello, World!"]] }
     response = etag(app, 'no-store').call(request)
     expect(response[1]['Cache-Control']).to eq 'no-store'
   end
 
   it "not set Cache-Control if it is already set" do
-    app = lambda { |env| [201, { 'Content-Type' => 'text/plain', 'Cache-Control' => 'public' }, ["Hello, World!"]] }
+    app = lambda { |env| [201, { 'Content-Type' => 'text/html', 'Cache-Control' => 'public' }, ["Hello, World!"]] }
     response = etag(app).call(request)
     expect(response[1]['Cache-Control']).to eq 'public'
   end
 
   it "not set Cache-Control if directive isn't present" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, ["Hello, World!"]] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html' }, ["Hello, World!"]] }
     response = etag(app, nil, nil).call(request)
     expect(response[1]['Cache-Control']).to be_nil
   end
 
   it "not change ETag if it is already set" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain', 'ETag' => '"abc"' }, ["Hello, World!"]] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html', 'ETag' => '"abc"' }, ["Hello, World!"]] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to eq "\"abc\""
   end
 
   it "not set ETag if body is empty" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain', 'Last-Modified' => Time.now.httpdate }, []] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html', 'Last-Modified' => Time.now.httpdate }, []] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to be_nil
   end
 
   it "not set ETag if Last-Modified is set" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain', 'Last-Modified' => Time.now.httpdate }, ["Hello, World!"]] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html', 'Last-Modified' => Time.now.httpdate }, ["Hello, World!"]] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to be_nil
   end
 
   it "not set ETag if a sendfile_body is given" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain' }, sendfile_body] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html' }, sendfile_body] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to be_nil
   end
 
   it "not set ETag if a status is not 200 or 201" do
-    app = lambda { |env| [401, { 'Content-Type' => 'text/plain' }, ['Access denied.']] }
+    app = lambda { |env| [401, { 'Content-Type' => 'text/html' }, ['Access denied.']] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to be_nil
   end
 
   it "set ETag even if no-cache is given" do
-    app = lambda { |env| [200, { 'Content-Type' => 'text/plain', 'Cache-Control' => 'no-cache, must-revalidate' }, ['Hello, World!']] }
+    app = lambda { |env| [200, { 'Content-Type' => 'text/html', 'Cache-Control' => 'no-cache, must-revalidate' }, ['Hello, World!']] }
     response = etag(app).call(request)
     expect(response[1]['ETag']).to eq "W/\"dffd6021bb2bd5b0af676290809ec3a5\""
   end
@@ -260,4 +291,5 @@ describe Rack::SteadyEtag do
     response[2].close
     expect(body).to be_closed
   end
+
 end
