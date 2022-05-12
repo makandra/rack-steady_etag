@@ -6,8 +6,8 @@ require_relative "steady_etag/version"
 
 module Rack
 
-  # Based on Rack::Etag from rack 2.2.2
-  # https://github.com/rack/rack/blob/v2.2.2/lib/rack/etag.rb
+  # Based on Rack::Etag from rack 2.2.3
+  # https://github.com/rack/rack/blob/v2.2.3/lib/rack/etag.rb
   #
   # Automatically sets the ETag header on all String bodies.
   #
@@ -87,7 +87,7 @@ module Rack
     def etag_body?(body)
       # Rack main branch checks for `:to_ary` here to exclude streaming responses,
       # but that had other issues for me in testing. Maybe recheck when there is a
-      # new Rack release after 2.2.2.
+      # new Rack release after 2.2.3.
       !body.respond_to?(:to_path)
     end
 

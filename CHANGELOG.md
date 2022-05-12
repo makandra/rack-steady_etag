@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## 0.2.0 - 2022-05-12
 
-- Be more compatible with Rack 2.2.2:
+- Be more compatible with Rack 2.2.3:
   - Always set a `Cache-Control` header, even for responses that we don't try to digest.
 - Strip patterns for responses with `Cache-Control: public`
 - Requires Rack 2.x (we want to break with Rack 3)
