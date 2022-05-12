@@ -197,6 +197,12 @@ describe Rack::SteadyEtag do
     expect(response1).to have_same_etag_as(response2)
   end
 
+  it "does not crash when generating ETags for binary responses that cannot be UTF-8 encoded" do
+    excel_content_type = { 'Content-Type' => 'application/vnd.ms-excel' }
+    not_utf8 = "vandflyver \xC5rhus"
+    expect { text_response(not_utf8, headers: excel_content_type) }.not_to raise_error
+  end
+
   # Tests from Rack::Test
 
   it "set ETag if none is set if status is 200" do

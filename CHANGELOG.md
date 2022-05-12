@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Unreleased
 
+## 0.2.2 - 2022-05-12
+
+- Don't raise an error when processing binary content.
+
 ## 0.2.1 - 2022-05-12
 
 - Only strip patterns for HTML and XHTML responses.

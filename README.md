@@ -35,9 +35,11 @@ Transformations are only applied for the `ETag` hash. The response body will not
 
 This middleware will process responses that match all of the following: 
 
-- Responses with a HTTP status of 200 or 201
-- Responses with a `Content-Type` of `text/html` or `application/xhtml+xml`
+- Responses with a HTTP status of 200 or 201.
+- Responses with a `Content-Type` of `text/html` or `application/xhtml+xml`.
 - Responses with a body. 
+
+Responses should also have an UTF-8 encoding (not checked by the middleware).
 
 This middleware can also add a default `Cache-Control` header for responses it *didn't* process. This is passed as an argument during middleware initialization (see *Installation* below). 
 

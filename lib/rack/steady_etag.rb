@@ -104,7 +104,10 @@ module Rack
       body.each do |part|
         parts << part
 
-        if part.present?
+        # Note that `part` can be a string with binary data here.
+        # It's important to check emptiness with #empty? instead of #blank?, since #blank?
+        # internally calls String#match? and that explodes if the string is not valid UTF-8.
+        unless part.empty?
           digest ||= initialize_digest(session)
           part = strip_patterns(part) if strippable_response
           digest << part
