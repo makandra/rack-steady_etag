@@ -78,6 +78,7 @@ The `'no-cache'` argument is the default `Cache-Control` for responses that cann
 
 - After checking out the repo, run `bin/setup` to install dependencies.
 - Run `bundle exec rspec` to run the tests.
+- Run `BUNDLE_GEMFILE=Gemfile.rack1 bundle exec rspec` to run tests for old Rack 1.
 - You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 - To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 

@@ -2,6 +2,8 @@
 # https://github.com/rack/rack/blob/master/test/spec_etag.rb
 
 require 'rack/session/abstract/id'
+require 'rack/mock'
+require 'rack/lint'
 
 describe Rack::SteadyEtag do
 
@@ -41,14 +43,14 @@ describe Rack::SteadyEtag do
     end
 
     failure_message do |response1|
-      "expected '#{etag(response1)}' to be the same ETag as #{etag(response2)}"
+      "expected '#{etag(response1)}' to be the same ETag as #{etag_from_response(response2)}"
     end
 
     failure_message_when_negated do |response1|
-      "expected responses to have different ETags, but both had #{etag(response1)}"
+      "expected responses to have different ETags, but both had #{etag_from_response(response1)}"
     end
 
-    def etag(response)
+    def etag_from_response(response)
       response[1]['ETag']
     end
   end
@@ -292,7 +294,7 @@ describe Rack::SteadyEtag do
 
   it "close the original body" do
     body = StringIO.new
-    app = lambda { |env| [200, {}, body] }
+    app = lambda { |env| [200, { 'Content-Type' => 'application/octet-stream' }, body] }
     response = etag(app).call(request)
     expect(body).to_not be_closed
     response[2].close

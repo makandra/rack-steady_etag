@@ -31,8 +31,10 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
+  # Rack 1.4.7 is the last version compatible with Rails 3.2.
+  #
   # I expect Rack 3 to have a new ETag middleware to no longer buffer
   # streaming responses: https://github.com/rack/rack/issues/1619
   # Once Rack 3 is out we should release a new version of this gem.
-  spec.add_dependency "rack", '~>2.0'
+  spec.add_dependency "rack", '>=1.4.7', '<3'
 end

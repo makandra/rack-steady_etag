@@ -41,8 +41,8 @@ module Rack
 
     def call(env)
       status, headers, body = @app.call(env)
-      headers = Utils::HeaderHash[headers]
-      session = env[RACK_SESSION]
+      headers = case_insensitive_headers(headers)
+      session = env['rack.session']
 
       if etag_status?(status) && etag_body?(body) && !skip_caching?(headers)
         original_body = body
@@ -50,7 +50,7 @@ module Rack
         body = Rack::BodyProxy.new(new_body) do
           original_body.close if original_body.respond_to?(:close)
         end
-        headers[ETAG] = %(W/"#{digest}") if digest
+        headers['ETag'] = %(W/"#{digest}") if digest
       end
 
       # It would make more sense to only set a Cache-Control for responses that we process.
@@ -70,12 +70,25 @@ module Rack
 
     private
 
+    # HTTP headers are case-insensitive.
+    # Wrap hedders into a hash with case-insensitive keys
+    def case_insensitive_headers(headers)
+      case Rack.release[0]
+      when '1'
+        Utils::HeaderHash.new(headers)
+      when '2'
+        Utils::HeaderHash[headers]
+      when '3'
+        raise "HeaderHash will be removed in Rack 3. Probably switch to new Headers."
+      end
+    end
+
     def set_cache_control_with_digest(headers)
-      headers[CACHE_CONTROL] ||= @digest_cache_control if @digest_cache_control
+      headers['Cache-Control'] ||= @digest_cache_control if @digest_cache_control
     end
 
     def set_cache_control_without_digest(headers)
-      headers[CACHE_CONTROL] ||= @no_digest_cache_control if @no_digest_cache_control
+      headers['Cache-Control'] ||= @no_digest_cache_control if @no_digest_cache_control
     end
 
     def etag_status?(status)
@@ -90,7 +103,7 @@ module Rack
     end
 
     def skip_caching?(headers)
-      headers.key?(ETAG) || headers.key?('Last-Modified')
+      headers.key?('ETag') || headers.key?('Last-Modified')
     end
 
     def digest_body(body, headers, session)
