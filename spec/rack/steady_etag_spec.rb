@@ -96,6 +96,22 @@ describe Rack::SteadyEtag do
     expect(response1).to have_same_etag_as(response2)
   end
 
+  it "ignores attribute order in an <meta name='csrf-token'>" do
+    response1 = html_response(<<~HTML)
+      <head>
+        <meta content="6EueAlhls9P" name="csrf-token" />
+      </head>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <head>
+        <meta content="qMN0fkVqOg" name="csrf-token" />
+      </head>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
   it 'does not change the response body when ignoring content' do
     html = <<~HTML
        <head>
@@ -133,6 +149,22 @@ describe Rack::SteadyEtag do
     response2 = html_response(<<~HTML)
       <head>
         <meta name="csrf-token" content="456" />
+      </head>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
+  it "ignores attribute order in an <meta name='csp-nonce'>" do
+    response1 = html_response(<<~HTML)
+      <head>
+        <meta content="123" name="csp-nonce" />
+      </head>
+    HTML
+
+    response2 = html_response(<<~HTML)
+      <head>
+        <meta content="456" name="csrf-token" />
       </head>
     HTML
 

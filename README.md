@@ -65,10 +65,10 @@ And then execute:
 bundle install
 ```
 
-In your `config/application.rb`:
+Make an initializer `config/initializer/etags.rb`:
 
 ```ruby
-config.middleware.swap Rack::ETag, Rack::SteadyETag, 'no-cache'
+Rails.application.config.middleware.swap Rack::ETag, Rack::SteadyETag, 'no-cache'
 ```
 
 The `'no-cache'` argument is the default `Cache-Control` for responses that cannot be digested. While it may feel surprising that the middleware changes the `Cache-Control` header in such a case, the [Rails default middleware stack](https://github.com/rails/rails/blob/d96609505511a76c618dc3adfa3ca4679317d008/railties/lib/rails/application/default_middleware_stack.rb#L81) configures the same behavior.
