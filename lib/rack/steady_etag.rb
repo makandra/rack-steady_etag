@@ -1,5 +1,5 @@
+require "rack"
 require 'digest/sha2'
-require_relative "steady_etag"
 require_relative "steady_etag/version"
 
 module Rack
