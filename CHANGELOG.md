@@ -5,6 +5,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Unreleased
 
+## 0.3.0 - 2022-05-13
+
+- Support for old Rack 1.4.7 (last version supported by Rails 3.2)
+- No longer depends on activesupport.
+
 ## 0.2.3 - 2022-05-12
 
 - Don't depend on `byebug` being in the user bundle.

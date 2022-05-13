@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rack-steady_etag (0.2.3)
+    rack-steady_etag (0.3.0)
       rack (>= 1.4.7, < 3)
 
 GEM
