@@ -27,7 +27,8 @@ describe Rack::SteadyEtag do
   end
 
   def html_response(html, headers: {}, env: {})
-    headers = headers.reverse_merge('Content-Type' => 'text/html')
+    default_headers = { 'Content-Type' => 'text/html' }
+    headers = default_headers.merge(headers)
     text_response(html, headers: headers, env: env)
   end
 
@@ -36,7 +37,7 @@ describe Rack::SteadyEtag do
       etag1 = response1[1]['ETag']
       etag2 = response2[1]['ETag']
 
-      etag1.present? && etag2.present? && etag1 == etag2
+      !etag1.nil? && etag1 != '' && !etag2.nil? && etag2 != '' && etag1 == etag2
     end
 
     failure_message do |response1|

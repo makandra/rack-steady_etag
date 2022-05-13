@@ -35,6 +35,4 @@ Gem::Specification.new do |spec|
   # streaming responses: https://github.com/rack/rack/issues/1619
   # Once Rack 3 is out we should release a new version of this gem.
   spec.add_dependency "rack", '~>2.0'
-
-  spec.add_dependency 'activesupport', '>= 3.2'
 end
