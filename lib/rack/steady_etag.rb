@@ -110,7 +110,7 @@ module Rack
       parts = []
       digest = nil
 
-      strippable_response = STRIP_CONTENT_TYPES.include?(headers['Content-Type'])
+      strippable_response = strippable_response?(headers)
 
       body.each do |part|
         parts << part
@@ -151,6 +151,17 @@ module Rack
         end
       end
       html
+    end
+
+    private
+
+    def strippable_response?(headers)
+      content_type = headers['Content-Type']
+      return false unless content_type
+
+      # Convert "text/tml; charset=utf-8" to just "text/html"
+      content_type = content_type.split(/\s*;\s*/)[0]
+      STRIP_CONTENT_TYPES.include?(content_type)
     end
 
   end

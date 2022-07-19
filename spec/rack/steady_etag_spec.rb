@@ -224,6 +224,24 @@ describe Rack::SteadyEtag do
     expect(response1).not_to have_same_etag_as(response2)
   end
 
+  it 'does strip pattern for a HTML content type with an appended charset' do
+    html_content_type_with_charset = { 'Content-Type' => 'text/html; charset=utf-8' }
+
+    response1 = text_response(<<~HTML, headers: html_content_type_with_charset)
+      <head>
+        <meta name="csrf-token" content="6EueAlhls9P" />
+      </head>
+    HTML
+
+    response2 = text_response(<<~HTML, headers: html_content_type_with_charset)
+      <head>
+        <meta name="csrf-token" content="qMN0fkVqOg" />
+      </head>
+    HTML
+
+    expect(response1).to have_same_etag_as(response2)
+  end
+
   it 'generates ETags for non-HTML responses' do
     excel_content_type = { 'Content-Type' => 'application/vnd.ms-excel' }
     response1 = text_response('foo', headers: excel_content_type)
