@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Unreleased
 
+## 0.3.1 - 2022-07-19
+
+- Fix a bug where we would not strip HTML responses with an embedded charset (e.g. `text/html; charset=utf-8`).
+
 ## 0.3.0 - 2022-05-13
 
 - Support for old Rack 1.4.7 (last version supported by Rails 3.2)
