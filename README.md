@@ -1,6 +1,6 @@
 # Rack::SteadyETag
 
-`Rack::SteadyETag` is a Rack middleware that generates the same default [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) for responses that only differ in CSRF tokens or CSP nonces.
+`Rack::SteadyETag` is a Rack middleware that generates the same default [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) for responses that only differ in XOR-masked CSRF tokens or CSP nonces.
 
 By default Rails uses [`Rack::ETag`](https://rdoc.info/github/rack/rack/Rack/ETag) to generate `ETag` headers by hashing the response body. In theory this would [enable caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match) for multiple requests to the same resource. However, since most Rails application layouts insert randomly rotating CSRF tokens and CSP nonces into the HTML, two requests for the same content and user will never produce the same response bytes. This means `Rack::ETag` will never send the same ETag twice, causing responses to [never hit a cache](https://github.com/rails/rails/issues/29889).
 
@@ -46,6 +46,7 @@ This middleware can also add a default `Cache-Control` header for responses it *
 ## Covered edge cases
 
 - Different `ETags` are generated when the same content is accessed with different Rack sessions.
+- Different `ETags` are generated when a Rails controller manually rotates the CSRF token.
 - `ETags` are only generated when the response is `Cache-Control: private` (this is a default in Rails).
 - No `ETag` is generated when the response already has an `ETag` header.
 - No `ETag` is generated when the response already has an `Last-Modified` header.

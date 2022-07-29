@@ -15,8 +15,16 @@ describe Rack::SteadyEtag do
     Rack::MockRequest.env_for("", opts)
   end
 
-  def session(id)
-    { 'session_id' => id }
+  def session(id:, **other_props)
+    session = { 'session_id' => id }
+
+    # Session keys are strings. Since we don't have ActiveSupport,
+    # we manually stringify keys.
+    other_props.each do |key, value|
+      session[key.to_s] = value
+    end
+
+    session
   end
 
   def sendfile_body
@@ -184,14 +192,20 @@ describe Rack::SteadyEtag do
   end
 
   it 'generates different ETags for the same content with and without a Rack session' do
-    response1 = html_response('content', env: { 'rack.session' => session('1') })
+    response1 = html_response('content', env: { 'rack.session' => session(id: '1') })
     response2 = html_response('content', env: {} )
     expect(response1).to_not have_same_etag_as(response2)
   end
 
   it 'generates different ETags for the same content with different Rack sessions' do
-    response1 = html_response('content', env: { 'rack.session' => session('1') })
-    response2 = html_response('content', env: { 'rack.session' => session('2') })
+    response1 = html_response('content', env: { 'rack.session' => session(id: '1') })
+    response2 = html_response('content', env: { 'rack.session' => session(id: '2') })
+    expect(response1).to_not have_same_etag_as(response2)
+  end
+
+  it 'generates different ETags for the sameRack session when a Rails app manually rotates the CSRF token' do
+    response1 = html_response('content', env: { 'rack.session' => session(id: '1', '_csrf_token': 'abc') })
+    response2 = html_response('content', env: { 'rack.session' => session(id: '1', '_csrf_token': 'def') })
     expect(response1).to_not have_same_etag_as(response2)
   end
 

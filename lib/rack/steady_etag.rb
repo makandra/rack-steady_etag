@@ -135,8 +135,17 @@ module Rack
     def initialize_digest(session)
       digest = Digest::SHA256.new
 
-      if session && (session_id = session['session_id'])
-        digest << session_id.to_s
+      if session
+        if (session_id = session['session_id'])
+          digest << session_id.to_s
+        end
+
+        # When we sign in or out with Devise, we always get a new session ID
+        # and CSRF token. Lets anyway include the real (unmasked) CSRF token in the
+        # digest in case a Rails controller manually rotates the token.
+        if (rails_csrf_token = session['_csrf_token'])
+          digest << rails_csrf_token.to_s
+        end
       end
 
       digest
