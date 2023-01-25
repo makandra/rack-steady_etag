@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Unreleased
 
+- Run local tests against Ruby 3.2 instead of 3.0 from now on
+
+
+
+
 ## 0.3.2 - 2022-07-29
 
 - Digest includes the [unmasked Rails CSRF token](https://api.rubyonrails.org/classes/ActionController/RequestForgeryProtection.html#method-i-real_csrf_token) in case a Rails controller manually rotates the token.  
