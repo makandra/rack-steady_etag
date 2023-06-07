@@ -6,6 +6,9 @@ By default Rails uses [`Rack::ETag`](https://rdoc.info/github/rack/rack/Rack/ETa
 
 `Rack::SteadyETag` is a drop-in replacement for `Rack::ETag`. It excludes random content (like CSRF tokens) from the generated ETag, causing two requests for the same content to usually carry the same ETag.
 
+> *Important*:
+> This gem has been deprecated. We instead recommend [reconfiguring your Rails app](https://makandracards.com/makandra/562483-rails-fixing-etags-that-never-match) so two requests to the same resource produce the same HTML for a given user.
+
 ## What is ignored
 
 `Rack::SteadyTag`  ignores the following patterns from the `ETag` hash:
