@@ -1,13 +1,15 @@
 # Rack::SteadyETag
 
+
+> **Important:**
+> This gem has been deprecated. We instead recommend [reconfiguring your Rails app](https://makandracards.com/makandra/562483-rails-fixing-etags-that-never-match) so two requests to the same resource produce the same HTML for a given user.
+
+
 `Rack::SteadyETag` is a Rack middleware that generates the same default [`ETag`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag) for responses that only differ in XOR-masked CSRF tokens or CSP nonces.
 
 By default Rails uses [`Rack::ETag`](https://rdoc.info/github/rack/rack/Rack/ETag) to generate `ETag` headers by hashing the response body. In theory this would [enable caching](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match) for multiple requests to the same resource. However, since most Rails application layouts insert randomly rotating CSRF tokens and CSP nonces into the HTML, two requests for the same content and user will never produce the same response bytes. This means `Rack::ETag` will never send the same ETag twice, causing responses to [never hit a cache](https://github.com/rails/rails/issues/29889).
 
 `Rack::SteadyETag` is a drop-in replacement for `Rack::ETag`. It excludes random content (like CSRF tokens) from the generated ETag, causing two requests for the same content to usually carry the same ETag.
-
-> *Important*:
-> This gem has been deprecated. We instead recommend [reconfiguring your Rails app](https://makandracards.com/makandra/562483-rails-fixing-etags-that-never-match) so two requests to the same resource produce the same HTML for a given user.
 
 ## What is ignored
 
